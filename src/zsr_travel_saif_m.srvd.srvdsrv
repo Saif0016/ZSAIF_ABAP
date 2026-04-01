@@ -1,0 +1,6 @@
+@EndUserText.label: 'Service Definition'
+define service ZSR_TRAVEL_SAIF_M {
+  expose ZC_TRAVEL_SAIF_M;
+  expose ZC_BOOKING_SAIF_M;
+  expose ZC_BOOKSUP_SAIF_M;
+}
