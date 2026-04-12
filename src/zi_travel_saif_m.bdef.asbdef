@@ -6,12 +6,13 @@ implementation in class zbp_i_travel_saif_m unique
 persistent table ztravel_saif_m
 lock master
 authorization master     ( instance )
-//etag master <field_name>
+etag master LastChangedAt
+early numbering
 {
   create(authorization : global) ;
   update;
   delete;
-//  field ( readonly ) TravelId;
+  field ( readonly ) TravelId;
   association _booking { create; }
   mapping for ztravel_saif_m
   {
@@ -37,11 +38,12 @@ implementation in class zbp_i_booking_saif_m unique
 persistent table zbooking_saif_m
 lock dependent by _travel
 authorization dependent by _travel
-//etag master <field_name>
+etag master LastChangedAt
+early numbering
 {
   update;
   delete;
-  field ( readonly ) TravelId;
+  field ( readonly ) TravelId,BookingId;
   association _travel;
   association _bookingsuppl { create; }
   mapping for zbooking_saif_m
@@ -65,11 +67,12 @@ implementation in class zbp_i_bookingsuppl_saif_m unique
 persistent table zbooksupp_saif_m
 lock dependent by _Travel
 authorization dependent by _Travel
-//etag master <field_name>
+etag master LastChangedAt
+early numbering
 {
   update;
   delete;
-  field ( readonly ) TravelId, BookingId;
+  field ( readonly ) TravelId, BookingId,BookingSupplementId;
   association _Travel;
   association _booking;
   mapping for zbooksupp_saif_m
