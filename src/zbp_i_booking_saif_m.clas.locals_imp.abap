@@ -48,7 +48,7 @@ CLASS lhc_zi_booking_saif_m IMPLEMENTATION.
           IF <ls_target>-BookingSupplementId IS INITIAL.
 
 
-            lv_max_booking += 10.
+            lv_max_booking += 1.
 
 
             <Ls_new_map_booking>-BookingSupplementId = lv_max_booking.
@@ -60,6 +60,7 @@ CLASS lhc_zi_booking_saif_m IMPLEMENTATION.
       ENDLOOP.
 
     ENDLOOP.
+
 
 
   ENDMETHOD.
