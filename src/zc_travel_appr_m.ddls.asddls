@@ -1,5 +1,6 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'Travel Approver Consumption View'
+@Search.searchable: true
 @Metadata.ignorePropagatedAnnotations: true
 @UI.headerInfo: {
     typeName: 'Travel',

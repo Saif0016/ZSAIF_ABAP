@@ -17,6 +17,8 @@ CLASS lhc_ZI_TRAVEL_SAIF_M DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS rejecttravel FOR MODIFY
       IMPORTING keys FOR ACTION zi_travel_saif_m~rejecttravel RESULT result.
+    METHODS get_instance_features FOR INSTANCE FEATURES
+      IMPORTING keys REQUEST requested_features FOR zi_travel_saif_m RESULT result.
 
 
     METHODS earlynumbering_cba_booking FOR NUMBERING
@@ -123,7 +125,7 @@ CLASS lhc_ZI_TRAVEL_SAIF_M IMPLEMENTATION.
 
         LOOP AT <ls_entity>-%target ASSIGNING FIELD-SYMBOL(<ls_target>).
 
-        APPEND CORRESPONDING #( <ls_target> ) TO mapped-zi_booking_saif_m ASSIGNING FIELD-SYMBOL(<Ls_new_map_booking>).
+          APPEND CORRESPONDING #( <ls_target> ) TO mapped-zi_booking_saif_m ASSIGNING FIELD-SYMBOL(<Ls_new_map_booking>).
 
           IF <ls_target>-BookingId IS INITIAL.
 
@@ -147,19 +149,19 @@ CLASS lhc_ZI_TRAVEL_SAIF_M IMPLEMENTATION.
 
   METHOD acceptTravel.
 
-  ModiFY enTITIES OF zi_travel_saif_m in local MODE
-  enTITY zi_travel_saif_m
-  update fieLDS ( OverallStatus )
-  with VALUE #( for ls_keys  in keys ( %tky = ls_keys-%tky
-                                        OverallStatus = 'A' ) )
-  rePORTED data(lt_travel).
+    MODIFY ENTITIES OF zi_travel_saif_m IN LOCAL MODE
+    ENTITY zi_travel_saif_m
+    UPDATE FIELDS ( OverallStatus )
+    WITH VALUE #( FOR ls_keys  IN keys ( %tky = ls_keys-%tky
+                                          OverallStatus = 'A' ) )
+    REPORTED DATA(lt_travel).
 
-  read eNTITIES OF zi_travel_saif_m in local MODE
-  enTITY zi_travel_saif_m
-  alL FIELDS WITH corRESPONDING #( keys )
-  resULT data(lt_result).
+    READ ENTITIES OF zi_travel_saif_m IN LOCAL MODE
+    ENTITY zi_travel_saif_m
+    ALL FIELDS WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
 
-  result = Value #( for ls_result in lt_result ( %tky = ls_result-%tky %param = ls_result ) ).
+    result = VALUE #( FOR ls_result IN lt_result ( %tky = ls_result-%tky %param = ls_result ) ).
 
   ENDMETHOD.
 
@@ -232,21 +234,21 @@ CLASS lhc_ZI_TRAVEL_SAIF_M IMPLEMENTATION.
 
     ENDLOOP.
 
-     MODIFY ENTITIES OF zi_travel_saif_m IN LOCAL MODE
-        ENTITY zi_travel_saif_m
-        CREATE FIELDS ( AgencyId CustomerId BeginDate EndDate BookingFee TotalPrice CurrencyCode OverallStatus Description )
-        WITH lt_travel
-        ENTITY zi_travel_saif_m
-        CREATE BY \_booking
-        FIELDS ( BookingId BookingDate CustomerId CarrierId ConnectionId FlightDate FlightPrice CurrencyCode BookingStatus )
-        WITH lt_booking_cba
-        ENTITY zi_booking_saif_m
-        CREATE BY \_bookingsuppl
-        FIELDS ( BookingSupplementId SupplementId Price CurrencyCode )
-        WITH lt_booksupl_cba
-        MAPPED DATA(lt_mapped).
+    MODIFY ENTITIES OF zi_travel_saif_m IN LOCAL MODE
+       ENTITY zi_travel_saif_m
+       CREATE FIELDS ( AgencyId CustomerId BeginDate EndDate BookingFee TotalPrice CurrencyCode OverallStatus Description )
+       WITH lt_travel
+       ENTITY zi_travel_saif_m
+       CREATE BY \_booking
+       FIELDS ( BookingId BookingDate CustomerId CarrierId ConnectionId FlightDate FlightPrice CurrencyCode BookingStatus )
+       WITH lt_booking_cba
+       ENTITY zi_booking_saif_m
+       CREATE BY \_bookingsuppl
+       FIELDS ( BookingSupplementId SupplementId Price CurrencyCode )
+       WITH lt_booksupl_cba
+       MAPPED DATA(lt_mapped).
 
-        mapped-zi_travel_saif_m = lt_mapped-zi_travel_saif_m.
+    mapped-zi_travel_saif_m = lt_mapped-zi_travel_saif_m.
 
 
 
@@ -258,19 +260,45 @@ CLASS lhc_ZI_TRAVEL_SAIF_M IMPLEMENTATION.
 
   METHOD rejectTravel.
 
-   ModiFY enTITIES OF zi_travel_saif_m in local MODE
-  enTITY zi_travel_saif_m
-  update fieLDS ( OverallStatus )
-  with VALUE #( for ls_keys  in keys ( %tky = ls_keys-%tky
-                                        OverallStatus = 'X' ) )
-  rePORTED data(lt_travel).
+    MODIFY ENTITIES OF zi_travel_saif_m IN LOCAL MODE
+   ENTITY zi_travel_saif_m
+   UPDATE FIELDS ( OverallStatus )
+   WITH VALUE #( FOR ls_keys  IN keys ( %tky = ls_keys-%tky
+                                         OverallStatus = 'X' ) )
+   REPORTED DATA(lt_travel).
 
-  read eNTITIES OF zi_travel_saif_m in local MODE
-  enTITY zi_travel_saif_m
-  alL FIELDS WITH corRESPONDING #( keys )
-  resULT data(lt_result).
+    READ ENTITIES OF zi_travel_saif_m IN LOCAL MODE
+    ENTITY zi_travel_saif_m
+    ALL FIELDS WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
 
-  result = Value #( for ls_result in lt_result ( %tky = ls_result-%tky %param = ls_result ) ).
+    result = VALUE #( FOR ls_result IN lt_result ( %tky = ls_result-%tky %param = ls_result ) ).
+  ENDMETHOD.
+
+  METHOD get_instance_features.
+
+    READ ENTITIES OF zi_travel_saif_m IN LOCAL MODE
+    ENTITY zi_travel_saif_m
+    FIELDS ( TravelId OverallStatus )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_travel).
+
+    result = VALUE #( FOR ls_travel IN lt_travel
+                      ( %tky = ls_travel-%tky
+                        %features-%action-acceptTravel = COND #( WHEN ls_travel-OverallStatus = 'A'
+                                                                 THEN if_abap_behv=>fc-o-disabled
+                                                                 ELSE if_abap_behv=>fc-o-enabled )
+                       %features-%action-rejectTravel = COND #( WHEN ls_travel-OverallStatus = 'X'
+                                                                 THEN if_abap_behv=>fc-o-disabled
+                                                                 ELSE if_abap_behv=>fc-o-enabled )
+                       %features-%assoc-_booking = COND #( WHEN ls_travel-OverallStatus = 'X'
+                                                                 THEN if_abap_behv=>fc-o-disabled
+                                                                 ELSE if_abap_behv=>fc-o-enabled ) ) ).
+
+
+
+
+
   ENDMETHOD.
 
 ENDCLASS.

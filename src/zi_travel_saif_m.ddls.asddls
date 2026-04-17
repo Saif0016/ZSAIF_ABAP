@@ -4,7 +4,7 @@
 @Metadata.ignorePropagatedAnnotations: true
 define root view entity ZI_TRAVEL_SAIF_M
   as select from ztravel_saif_m
-  composition [0..*] of ZI_BOOKING_SAIF_M as _booking
+  composition [0..*] of ZI_BOOKING_SAIF_M        as _booking
   association [0..1] to /DMO/I_Agency            as _agency   on $projection.AgencyId = _agency.AgencyID
   association [0..1] to /DMO/I_Customer          as _customer on $projection.CustomerId = _customer.CustomerID
   association [1..1] to I_Currency               as _currency on $projection.CurrencyCode = _currency.Currency
@@ -22,8 +22,11 @@ define root view entity ZI_TRAVEL_SAIF_M
       currency_code   as CurrencyCode,
       description     as Description,
       overall_status  as OverallStatus,
+      @Semantics.user.createdBy: true
       created_by      as CreatedBy,
+      @Semantics.systemDateTime.createdAt: true
       created_at      as CreatedAt,
+      @Semantics.user.localInstanceLastChangedBy: true
       last_changed_by as LastChangedBy,
       @Semantics.systemDateTime.localInstanceLastChangedAt: true
       last_changed_at as LastChangedAt,

@@ -24,9 +24,9 @@ define root view entity ZC_TRAVEL_SAIF_M
       @ObjectModel.text.element: [ 'OverallstatusText' ]
       OverallStatus,
       _status._Text.Text as OverallstatusText : localized,
-      //      CreatedBy,
-      //      CreatedAt,
-      //      LastChangedBy,
+            CreatedBy,
+            CreatedAt,
+            LastChangedBy,
       LastChangedAt,
       /* Associations */
       _agency,
