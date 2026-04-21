@@ -19,6 +19,13 @@ CLASS lhc_ZI_TRAVEL_SAIF_M DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR ACTION zi_travel_saif_m~rejecttravel RESULT result.
     METHODS get_instance_features FOR INSTANCE FEATURES
       IMPORTING keys REQUEST requested_features FOR zi_travel_saif_m RESULT result.
+    METHODS validatecustomer FOR VALIDATE ON SAVE
+      IMPORTING keys FOR zi_travel_saif_m~validatecustomer.
+    METHODS valdiatestatus FOR VALIDATE ON SAVE
+      IMPORTING keys FOR zi_travel_saif_m~valdiatestatus.
+
+    METHODS validatedates FOR VALIDATE ON SAVE
+      IMPORTING keys FOR zi_travel_saif_m~validatedates.
 
 
     METHODS earlynumbering_cba_booking FOR NUMBERING
@@ -296,6 +303,130 @@ CLASS lhc_ZI_TRAVEL_SAIF_M IMPLEMENTATION.
                                                                  ELSE if_abap_behv=>fc-o-enabled ) ) ).
 
 
+
+
+
+  ENDMETHOD.
+
+  METHOD validateCustomer.
+
+    READ ENTITY IN LOCAL MODE zi_travel_saif_m
+    FIELDS ( CustomerId )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(it_cust_tmp).
+
+    DATA : lt_cust TYPE SORTED TABLE OF /dmo/customer WITH UNIQUE KEY customer_id.
+
+    lt_cust = CORRESPONDING #( it_cust_tmp DISCARDING DUPLICATES MAPPING customer_id = CustomerId ).
+
+    DELETE lt_cust WHERE customer_id IS INITIAL.
+
+    IF lt_cust IS NOT INITIAL.
+      SELECT
+      FROM /dmo/customer
+      FIELDS customer_id
+      FOR ALL ENTRIES IN @lt_cust
+      WHERE customer_id = @lt_cust-customer_id
+      INTO TABLE @DATA(it_cust_db).
+
+      IF sy-subrc IS INITIAL.
+
+      ENDIF.
+    ENDIF.
+    LOOP AT it_cust_tmp ASSIGNING FIELD-SYMBOL(<ls_cust>).
+
+
+      IF <ls_cust>-CustomerId IS INITIAL
+              OR NOT line_exists( it_cust_db[ customer_id = <ls_cust>-CustomerId ] ).
+
+        APPEND VALUE #( %tky = <ls_cust>-%tky )
+              TO failed-zi_travel_saif_m.
+
+        APPEND VALUE #( %tky = <ls_cust>-%tky
+                        %msg = NEW /dmo/cm_flight_messages(
+          textid                = /dmo/cm_flight_messages=>customer_unkown
+          customer_id           = <ls_cust>-CustomerId
+          severity               = if_abap_behv_message=>severity-error
+        )
+          %element-CustomerId = if_abap_behv=>mk-on
+         )
+            TO reported-zi_travel_saif_m.
+
+
+      ENDIF.
+
+    ENDLOOP.
+
+
+
+
+  ENDMETHOD.
+
+  METHOD valdiateStatus.
+    READ ENTITIES OF zi_travel_saif_m IN LOCAL MODE
+          ENTITY zi_travel_saif_m
+            FIELDS ( OverallStatus )
+            WITH CORRESPONDING #( keys )
+          RESULT DATA(lt_travels).
+
+    LOOP AT lt_travels INTO DATA(ls_travel).
+      CASE ls_travel-OverallStatus.
+        WHEN 'O'.  " Open
+        WHEN 'X'.  " Cancelled
+        WHEN 'A'.  " Accepted
+
+        WHEN OTHERS.
+          APPEND VALUE #( %tky = ls_travel-%tky ) TO failed-zi_travel_saif_m.
+
+          APPEND VALUE #( %tky = ls_travel-%tky
+                          %msg = NEW /dmo/cm_flight_messages(
+                                     textid = /dmo/cm_flight_messages=>status_invalid
+                                     severity = if_abap_behv_message=>severity-error
+                                     status = ls_travel-OverallStatus )
+                          %element-OverallStatus = if_abap_behv=>mk-on
+                        ) TO reported-zi_travel_saif_m.
+      ENDCASE.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD validateDates.
+
+    READ ENTITY  IN LOCAL MODE  zi_travel_saif_m
+    FIELDS ( BeginDate EndDate )
+    WITH CORRESPONDING #( keys )
+   RESULT DATA(lt_travels).
+
+    LOOP AT lt_travels INTO DATA(travel).
+
+      IF travel-EndDate < travel-BeginDate.  "end_date before begin_date
+
+        APPEND VALUE #( %tky = travel-%tky ) TO failed-zi_travel_saif_m.
+
+        APPEND VALUE #( %tky = travel-%tky
+                        %msg = NEW /dmo/cm_flight_messages(
+                                   textid     = /dmo/cm_flight_messages=>begin_date_bef_end_date
+                                   severity   = if_abap_behv_message=>severity-error
+                                   begin_date = travel-BeginDate
+                                   end_date   = travel-EndDate
+                                   travel_id  = travel-TravelId )
+                        %element-BeginDate   = if_abap_behv=>mk-on
+                        %element-EndDate     = if_abap_behv=>mk-on
+                     ) TO reported-zi_travel_saif_m.
+
+      ELSEIF travel-BeginDate < cl_abap_context_info=>get_system_date( ).  "begin_date must be in the future
+
+        APPEND VALUE #( %tky        = travel-%tky ) TO failed-zi_travel_saif_m.
+
+        APPEND VALUE #( %tky = travel-%tky
+                        %msg = NEW /dmo/cm_flight_messages(
+                                    textid   = /dmo/cm_flight_messages=>begin_date_on_or_bef_sysdate
+                                    severity = if_abap_behv_message=>severity-error )
+                        %element-BeginDate  = if_abap_behv=>mk-on
+                        %element-EndDate    = if_abap_behv=>mk-on
+                      ) TO reported-zi_travel_saif_m.
+      ENDIF.
+
+    ENDLOOP.
 
 
 

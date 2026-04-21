@@ -13,6 +13,9 @@ early numbering
   action ( features : instance ) rejectTravel result [1] $self;
   factory action copyTravel [1];
   internal action recalcTotPrice;
+  validation validateCustomer on save { create; field CustomerId;}
+  validation validateDates on save { create; field BeginDate,EndDate;}
+  validation valdiateStatus on save { create; field OverallStatus;}
   create ( authorization : global );
   update;
   delete;
