@@ -13,9 +13,10 @@ early numbering
   action ( features : instance ) rejectTravel result [1] $self;
   factory action copyTravel [1];
   internal action recalcTotPrice;
-  validation validateCustomer on save { create; field CustomerId;}
-  validation validateDates on save { create; field BeginDate,EndDate;}
-  validation valdiateStatus on save { create; field OverallStatus;}
+  validation validateCustomer on save { create; field CustomerId; }
+  validation validateDates on save { create; field BeginDate, EndDate; }
+  validation valdiateStatus on save { create; field OverallStatus; }
+  determination calculateTotalPrice on modify { create; field BookingFee , CurrencyCode; }
   create ( authorization : global );
   update;
   delete;
@@ -54,6 +55,8 @@ early numbering
   field ( readonly ) TravelId, BookingId, LastChangedAt;
   field ( mandatory ) CarrierId, ConnectionId, FlightDate, BookingStatus;
   field ( mandatory : create, readonly : update ) BookingDate, CustomerId;
+
+  determination calculateTotalPrice on modify { create; field FlightPrice, CurrencyCode; }
   association _travel;
   association _bookingsuppl { create ( features : instance ); }
   mapping for zbooking_saif_m
@@ -84,6 +87,7 @@ early numbering
   delete;
   field ( readonly ) TravelId, BookingId, BookingSupplementId, LastChangedAt;
   field ( mandatory ) Price, SupplementId;
+  determination calculateTotalPrice on modify { create; field Price, CurrencyCode; }
   association _Travel;
   association _booking;
   mapping for zbooksupp_saif_m

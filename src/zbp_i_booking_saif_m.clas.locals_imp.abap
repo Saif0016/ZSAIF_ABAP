@@ -6,6 +6,8 @@ CLASS lhc_zi_booking_saif_m DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING entities FOR CREATE zi_booking_saif_m\_Bookingsuppl.
     METHODS get_instance_features FOR INSTANCE FEATURES
       IMPORTING keys REQUEST requested_features FOR zi_booking_saif_m RESULT result.
+    METHODS calculatetotalprice FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR zi_booking_saif_m~calculatetotalprice.
 
 ENDCLASS.
 
@@ -82,6 +84,21 @@ CLASS lhc_zi_booking_saif_m IMPLEMENTATION.
                                                                  THEN if_abap_behv=>fc-o-disabled
                                                                  ELSE if_abap_behv=>fc-o-enabled ) ) ).
 
+
+
+
+  ENDMETHOD.
+
+  METHOD calculateTotalPrice.
+
+    DATA : it_travel TYPE STANDARD TABLE OF zi_travel_saif_m WITH UNIQUE HASHED KEY key COMPONENTS TravelId.
+
+    it_travel = CORRESPONDING #( keys DISCARDING DUPLICATES MAPPING TravelId = TravelId  ).
+
+    MODIFY ENTITIES OF zi_travel_saif_m IN LOCAL MODE
+     ENTITY zi_travel_saif_m
+     EXECUTE recalcTotPrice
+     FROM CORRESPONDING #( it_travel ).
 
 
 
