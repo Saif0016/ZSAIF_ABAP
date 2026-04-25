@@ -1,9 +1,10 @@
-managed; //implementation in class zbp_i_travel_saif_m unique;
+managed implementation in class zbp_i_travel_saif_m unique;
 strict ( 2 );
 
 define behavior for ZI_TRAVEL_SAIF_M //alias <alias_name>
 implementation in class zbp_i_travel_saif_m unique
 persistent table ztravel_saif_m
+with additional save
 lock master
 authorization master ( instance )
 etag master LastChangedAt
@@ -77,7 +78,8 @@ early numbering
 
 define behavior for ZI_BOOKSUP_SAIF_M //alias <alias_name>
 implementation in class zbp_i_bookingsuppl_saif_m unique
-persistent table zbooksupp_saif_m
+//persistent table zbooksupp_saif_m
+with unmanaged save with full data
 lock dependent by _Travel
 authorization dependent by _Travel
 etag master LastChangedAt

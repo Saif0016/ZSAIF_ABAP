@@ -1,3 +1,176 @@
+CLASS lsc_zi_travel_saif_m DEFINITION INHERITING FROM cl_abap_behavior_saver.
+
+  PROTECTED SECTION.
+
+    METHODS save_modified REDEFINITION.
+
+ENDCLASS.
+
+CLASS lsc_zi_travel_saif_m IMPLEMENTATION.
+
+  METHOD save_modified.
+
+    DATA : lt_travel_log   TYPE STANDARD TABLE OF zlog_stravel_m,
+           lt_travel_log_c TYPE STANDARD TABLE OF zlog_stravel_m.
+
+    IF create-zi_travel_saif_m IS NOT INITIAL.
+
+
+      lt_travel_log = CORRESPONDING #( update-zi_travel_saif_m ).
+
+      LOOP AT lt_travel_log ASSIGNING FIELD-SYMBOL(<fs_travel_log>).
+
+        <fs_travel_log>-changing_operation = 'CREATE'.
+        GET TIME STAMP FIELD <fs_travel_log>-created_at.
+
+        READ TABLE create-zi_travel_saif_m ASSIGNING FIELD-SYMBOL(<fs_create>)
+                                           WITH TABLE KEY entity
+                                           COMPONENTS TravelId = <fs_travel_log>-travelid.
+        IF sy-subrc IS INITIAL.
+
+          IF <fs_create>-%control-BookingFee = cl_abap_behv=>flag_changed.
+
+            <fs_travel_log>-changed_field_name = 'BookingFee'.
+            <fs_travel_log>-changed_value = <fs_create>-BookingFee.
+            TRY.
+                <fs_travel_log>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
+              CATCH cx_uuid_error.
+                "handle exception
+            ENDTRY.
+            APPEND <fs_travel_log> TO lt_travel_log_c.
+
+          ENDIF.
+
+        ENDIF.
+
+      ENDLOOP.
+
+      INSERT zlog_stravel_m FROM TABLE @lt_travel_log_c.
+
+    ELSEIF update-zi_travel_saif_m IS NOT INITIAL.
+
+
+      lt_travel_log = CORRESPONDING #( update-zi_travel_saif_m ).
+
+      LOOP AT lt_travel_log ASSIGNING FIELD-SYMBOL(<ls_travel_log>).
+
+        <ls_travel_log>-changing_operation = 'UPDATE'.
+        GET TIME STAMP FIELD <ls_travel_log>-created_at.
+
+        READ TABLE update-zi_travel_saif_m ASSIGNING FIELD-SYMBOL(<ls_create>)
+                                           WITH TABLE KEY entity
+                                           COMPONENTS TravelId = <ls_travel_log>-travelid.
+        IF sy-subrc IS INITIAL.
+
+          IF <ls_create>-%control-CustomerId = cl_abap_behv=>flag_changed.
+
+            <ls_travel_log>-changed_field_name = 'CustomerId'.
+            <ls_travel_log>-changed_value = <ls_create>-CustomerId.
+            TRY.
+                <ls_travel_log>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
+              CATCH cx_uuid_error.
+                "handle exception
+            ENDTRY.
+            APPEND <ls_travel_log> TO lt_travel_log_c.
+          ENDIF.
+
+          IF <ls_create>-%control-Description = cl_abap_behv=>flag_changed.
+
+            <ls_travel_log>-changed_field_name = 'Description'.
+            <ls_travel_log>-changed_value = <ls_create>-Description.
+            TRY.
+                <ls_travel_log>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
+              CATCH cx_uuid_error.
+                "handle exception
+            ENDTRY.
+            APPEND <ls_travel_log> TO lt_travel_log_c.
+          ENDIF.
+
+        ENDIF.
+      ENDLOOP.
+
+      IF lt_travel_log_c IS NOT INITIAL.
+        INSERT zlog_stravel_m FROM TABLE @lt_travel_log_c.
+      ENDIF.
+
+
+    ELSEIF delete-zi_travel_saif_m IS NOT INITIAL.
+
+      lt_travel_log = CORRESPONDING #( delete-zi_travel_saif_m ).
+
+      LOOP AT lt_travel_log ASSIGNING FIELD-SYMBOL(<fs_log_del>).
+
+        <fs_log_del>-changing_operation = 'DELETE'.
+        GET TIME STAMP FIELD <fs_log_del>-created_at.
+
+        TRY.
+            <fs_log_del>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
+          CATCH cx_uuid_error.
+            "handle exception
+        ENDTRY.
+        APPEND <fs_log_del> TO lt_travel_log_c.
+      ENDLOOP.
+      IF lt_travel_log_c IS NOT INITIAL.
+        INSERT zlog_stravel_m FROM TABLE @lt_travel_log_c.
+      ENDIF.
+ENDIF.
+**********************************************************************
+**********************************************************************
+      DATA : lt_book_suppl TYPE STANDARD TABLE OF zbooksupp_saif_m.
+      IF create-zi_booksup_saif_m IS NOT INITIAL.
+
+        lt_book_suppl = VALUE #( FOR ls_booksup IN create-zi_booksup_saif_m
+                                ( travel_id = ls_booksup-TravelId
+                                  booking_id = ls_booksup-BookingId
+                                  booking_supplement_id = ls_booksup-BookingSupplementId
+                                  supplement_id  = ls_booksup-SupplementId
+                                  price   = ls_booksup-Price
+                                  currency_code = ls_booksup-CurrencyCode
+                                  last_changed_at = ls_booksup-LastChangedAt  ) ).
+
+        INSERT zbooksupp_saif_m FROM TABLE @lt_book_suppl.
+
+
+      ELSEIF update-zi_booksup_saif_m IS NOT INITIAL.
+
+        lt_book_suppl = VALUE #( FOR ls_booksup IN create-zi_booksup_saif_m
+                                ( travel_id = ls_booksup-TravelId
+                                  booking_id = ls_booksup-BookingId
+                                  booking_supplement_id = ls_booksup-BookingSupplementId
+                                  supplement_id  = ls_booksup-SupplementId
+                                  price   = ls_booksup-Price
+                                  currency_code = ls_booksup-CurrencyCode
+                                  last_changed_at = ls_booksup-LastChangedAt  ) ).
+
+        UPDATE zbooksupp_saif_m FROM TABLE @lt_book_suppl.
+
+
+      ELSEIF delete-zi_booksup_saif_m IS NOT INITIAL.
+
+
+        lt_book_suppl = VALUE #( FOR ls_booksup IN create-zi_booksup_saif_m
+                                 ( travel_id = ls_booksup-TravelId
+                                   booking_id = ls_booksup-BookingId
+                                   booking_supplement_id = ls_booksup-BookingSupplementId
+                                   supplement_id  = ls_booksup-SupplementId
+                                   price   = ls_booksup-Price
+                                   currency_code = ls_booksup-CurrencyCode
+                                   last_changed_at = ls_booksup-LastChangedAt  ) ).
+
+        DELETE zbooksupp_saif_m FROM TABLE @lt_book_suppl.
+
+      ENDIF.
+
+
+
+
+
+
+
+  ENDMETHOD.
+
+ENDCLASS.
+
 CLASS lhc_ZI_TRAVEL_SAIF_M DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
 
